@@ -5,9 +5,12 @@ namespace GOTHIC_ENGINE {
   class zPhysicalMesh : public zPhysicalObjectBase {
   protected:
     btRigidBody* RigidBody;
+    zPhysicalMesh();
   public:
 
     virtual void SetVelocity( const zVEC3& vec );
+    virtual void SetPosition( const zVEC3& vec );
+    virtual void SetMatrix( const zMAT4& trafo );
     virtual btRigidBody* GetRigidBody();
     virtual ~zPhysicalMesh();
   };
@@ -16,7 +19,7 @@ namespace GOTHIC_ENGINE {
   class zPhysicalSphere : public zPhysicalMesh {
   protected:
     btSphereShape* Sphere;
-    zPhysicalSphere() {}
+    zPhysicalSphere() : zPhysicalMesh() {}
   public:
 
     static zPhysicalSphere* CreateSphere( float radius, const zVEC3& position = zVEC3( 0.0f, 0.0f, 0.0f ), float mass = 0.0f, bool useInertia = false );
@@ -27,7 +30,7 @@ namespace GOTHIC_ENGINE {
   class zPhysicalBox : public zPhysicalMesh {
   protected:
     btBoxShape* Box;
-    zPhysicalBox() {}
+    zPhysicalBox() : zPhysicalMesh() {}
   public:
 
     static zPhysicalBox* CreateBox( const zVEC3& halfExtents, const zVEC3& position = zVEC3( 0.0f, 0.0f, 0.0f ), float mass = 0.0f, bool useInertia = false );
@@ -38,7 +41,7 @@ namespace GOTHIC_ENGINE {
   class zPhysicalCylinder : public zPhysicalMesh {
   protected:
     btCylinderShape* Cylinder;
-    zPhysicalCylinder() {}
+    zPhysicalCylinder() : zPhysicalMesh() {}
   public:
 
     static zPhysicalCylinder* CreateCylinder( const zVEC3& halfExtents, const zVEC3& position = zVEC3( 0.0f, 0.0f, 0.0f ), float mass = 0.0f, bool useInertia = false );
@@ -49,7 +52,7 @@ namespace GOTHIC_ENGINE {
   class zPhysicalCone : public zPhysicalMesh {
   protected:
     btConeShape* Cone;
-    zPhysicalCone() {}
+    zPhysicalCone() : zPhysicalMesh() {}
   public:
 
     static zPhysicalCone* CreateCone( const float& radius, const float& height, const zVEC3& position = zVEC3( 0.0f, 0.0f, 0.0f ), float mass = 0.0f, bool useInertia = false );

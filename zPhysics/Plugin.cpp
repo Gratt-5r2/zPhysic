@@ -35,7 +35,8 @@ namespace GOTHIC_ENGINE {
       zPhysicalVobProvider* vobConnector = new zPhysicalVobProvider( sphere, vob );
       sphere->Release();
       vobConnector->SetVelocity( camVec );
-      PhysicalWorld->AddObject( vobConnector->GetPhysicalMesh() );
+      PhysicalWorld->AddObject( vobConnector );
+      vobConnector->Release();
     }
 
     if( zKeyToggled( KEY_I ) ) {
@@ -53,27 +54,39 @@ namespace GOTHIC_ENGINE {
       zPhysicalVobProvider* vobConnector = new zPhysicalVobProvider( sphere, vob );
       sphere->Release();
       vobConnector->SetVelocity( camVec );
-      PhysicalWorld->AddObject( vobConnector->GetPhysicalMesh() );
+      PhysicalWorld->AddObject( vobConnector );
+      vobConnector->Release();
     }
 
     if( zKeyToggled( KEY_O ) ) {
+      // zVEC3 camAt  = ogame->GetCameraVob()->GetAtVectorWorld();
+      // zVEC3 camPos = ogame->GetCameraVob()->GetPositionWorld() + camAt * 100.0f;
+      // zVEC3 camVec = camAt * 100.0f;
+      // zPhysicalTriangleMesh* sphere = zPhysicalTriangleMesh::CreatePolyMesh( "ADDON_STONES_CRYSTAL_01_228P.3DS", camPos, 500.0, true );
+      // 
+      // if( sphere ) {
+      //   zCVob* vob = new zCVob();
+      //   vob->SetCollDetDyn( True );
+      //   vob->SetVisual( "ADDON_STONES_CRYSTAL_01_228P.3DS" );
+      //   ogame->GetGameWorld()->AddVob( vob );
+      //   zPhysicalVobProvider* vobConnector = new zPhysicalVobProvider( sphere, vob );
+      //   sphere->Release();
+      //   vobConnector->SetVelocity( camVec );
+      //   PhysicalWorld->AddObject( vobConnector );
+      //   vobConnector->Release();
+      // }
+      // else
+      //   Message::Box( "Can not load mesh" );
+      
       zVEC3 camAt  = ogame->GetCameraVob()->GetAtVectorWorld();
       zVEC3 camPos = ogame->GetCameraVob()->GetPositionWorld() + camAt * 100.0f;
       zVEC3 camVec = camAt * 100.0f;
-      zPhysicalTriangleMesh* sphere = zPhysicalTriangleMesh::CreatePolyMesh( "ADDON_STONES_CRYSTAL_01_228P.3DS", camPos, 500.0, true );
 
-      if( sphere ) {
-        zCVob* vob = new zCVob();
-        vob->SetCollDetDyn( True );
-        vob->SetVisual( "ADDON_STONES_CRYSTAL_01_228P.3DS" );
-        ogame->GetGameWorld()->AddVob( vob );
-        zPhysicalVobProvider* vobConnector = new zPhysicalVobProvider( sphere, vob );
-        sphere->Release();
-        vobConnector->SetVelocity( camVec );
-        PhysicalWorld->AddObject( vobConnector->GetPhysicalMesh() );
-      }
-      else
-        Message::Box( "Can not load mesh" );
+      zCVobPhysical* vobPhysical = new zCVobPhysical();
+      vobPhysical->SetVisual( "ADDON_STONES_CRYSTAL_01_228P.3DS", zCOLL_METHOD_VOBSHAPE );
+      vobPhysical->SetMass( 60.0f );
+      ogame->GetGameWorld()->AddVob( vobPhysical );
+      vobPhysical->SetPositionWorld( camPos );
     }
 
 
@@ -92,7 +105,8 @@ namespace GOTHIC_ENGINE {
         zPhysicalVobProvider* vobConnector = new zPhysicalVobProvider( sphere, vob );
         sphere->Release();
         vobConnector->SetVelocity( camVec );
-        PhysicalWorld->AddObject( vobConnector->GetPhysicalMesh() );
+        PhysicalWorld->AddObject( vobConnector );
+        vobConnector->Release();
       }
       else
         Message::Box( "Can not load mesh" );
@@ -115,20 +129,17 @@ namespace GOTHIC_ENGINE {
   }
 
   void LoadBegin() {
-    zPhysicalVobProvider::DeleteAllProvider();
-    delete PhysicalWorld;
+    cmd << "#1" << endl;
+    if( PhysicalWorld )
+      delete PhysicalWorld;
+
+    PhysicalWorld = new zPhysicalWorld();
+    cmd << physicalMeshesAllocated << endl;
   }
 
   void LoadEnd() {
-    PhysicalWorld = new zPhysicalWorld();
+    cmd << "#2" << endl;
     PhysicalWorld->InitializeWorldMesh();
-    for( uint i = 0; i < PhysicalMeshQueue.GetNum(); i++ ) {
-      zPhysicalMesh* mesh = PhysicalMeshQueue[i];
-      PhysicalWorld->AddObject( mesh );
-      mesh->Release();
-    }
-
-    PhysicalMeshQueue.Clear();
   }
 
   void Game_LoadBegin_NewGame() {

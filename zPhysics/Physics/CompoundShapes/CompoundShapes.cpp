@@ -2,177 +2,81 @@
 // Union SOURCE file
 
 namespace GOTHIC_ENGINE {
-  // Poly method
-  inline btConvexTriangleMeshShape* ProgMeshProtoToConvexTriangleMeshShape( zCProgMeshProto* proto ) {
-    zCMesh* mesh = proto->GetMesh( 0 );
-    if( !mesh ) {
-      Message::Fatal( "No mesh data - " + proto->GetVisualName() );
-      return Null;
-    }
-  
-    btTriangleMesh* meshInterface = new btTriangleMesh();
-    for( int i = 0; i < mesh->numPoly; i++ ) {
-      zCPolygon* poly = mesh->polyList[i];
-  
-      meshInterface->addTriangle(
-        poly->vertex[0]->position.ToBtVector3(),
-        poly->vertex[1]->position.ToBtVector3(),
-        poly->vertex[2]->position.ToBtVector3()
-      );
-    }
-  
-    btConvexTriangleMeshShape* triangleMeshShape = new btConvexTriangleMeshShape( meshInterface );
-    triangleMeshShape->setMargin( 0.0 );
-    mesh->Release();
-    return triangleMeshShape;
+  const zVEC3& zCProgMeshProto::GetVertex( const int& subMeshID, const int& triID, const int& vertID ) {
+    return posList[subMeshList[subMeshID].wedgeList[subMeshList[subMeshID].triList[triID].wedge[vertID]].position];
   }
 
 
   // Vertex method
-  inline btConvexHullShape* ProgMeshProtoToConvexHullShape( zCProgMeshProto* proto ) {
-    zCMesh* mesh = proto->GetMesh( 0 );
-    if( !mesh ) {
-      Message::Fatal( "No mesh data - " + proto->GetVisualName() );
-      return Null;
+  btConvexHullShape* zCProgMeshProto::GetBtHullMesh() {
+    btConvexHullShape* convexHull = new btConvexHullShape();
+    for( int subMeshID = 0; subMeshID < numSubMeshes; subMeshID++ ) {
+      auto material = subMeshList[subMeshID].material;
+      if( material && material->noCollDet )
+        continue;
+
+      for( int triID = 0; triID < subMeshList[subMeshID].triList.GetNum(); triID++ ) {
+        convexHull->addPoint( GetVertex( subMeshID, triID, VA ).ToBtVector3() );
+        convexHull->addPoint( GetVertex( subMeshID, triID, VB ).ToBtVector3() );
+        convexHull->addPoint( GetVertex( subMeshID, triID, VC ).ToBtVector3() );
+      }
     }
 
-    btConvexHullShape* convexHull = new btConvexHullShape();
-    for( int i = 0; i < mesh->numVert; i++ ) {
-      zCVertex* vert = mesh->vertList[i];
-      convexHull->addPoint( vert->position.ToBtVector3() );
+    if( convexHull->getNumVertices() == 0 ) {
+      delete convexHull;
+      return Null;
     }
 
     convexHull->optimizeConvexHull();
     convexHull->setMargin( 0.0 );
-    mesh->Release();
     return convexHull;
   }
 
 
-  zCMesh* zCProgMeshProto::GetMeshCollDet() {
-    zCMesh* mesh = zNEW( zCMesh );
-    int numPoly = 0;
-
-    for( int n = 0; n < numSubMeshes; n++ ) {
-      if( subMeshList[n].material && subMeshList[n].material->noCollDet )
+  // Poly method
+  inline btConvexTriangleMeshShape* zCProgMeshProto::GetBtTriangleMesh() {
+    btTriangleMesh* meshInterface = new btTriangleMesh();
+    for( int subMeshID = 0; subMeshID < numSubMeshes; subMeshID++ ) {
+      auto material = subMeshList[subMeshID].material;
+      if( material && material->noCollDet )
         continue;
 
-      numPoly += subMeshList[n].triList.GetNum();
-    }
-
-    zCMesh::S_InitVertexMergeCache( mesh );
-
-    mesh->AllocPolys( numPoly );
-    mesh->AllocVerts( numPoly * 3 );
-
-    for( int i = 0; i < numSubMeshes; i++ ) {
-
-      cmd << ">> " << endl;
-      if( subMeshList[i].material && subMeshList[i].material->noCollDet ) {
-        cmd << subMeshList[i].material->GetName() << "  " << subMeshList[i].material->noCollDet << endl;
-        continue;
+      for( int triID = 0; triID < subMeshList[subMeshID].triList.GetNum(); triID++ ) {
+        meshInterface->addTriangle(
+          GetVertex( subMeshID, triID, VA ).ToBtVector3(),
+          GetVertex( subMeshID, triID, VB ).ToBtVector3(),
+          GetVertex( subMeshID, triID, VC ).ToBtVector3()
+        );
       }
-
-      for( int p = 0; p < subMeshList[i].triList.GetNum(); p++ ) {
-        
-        
-        // if( subMeshList[i].material )
-        //   cmd << subMeshList[i].material->GetName() << "  " << subMeshList[i].material->noCollDet << endl;
-
-
-        zVEC3 a, b, c;
-        zVEC2	f, g, h;
-        a = posList[subMeshList[i].wedgeList[subMeshList[i].triList[p].wedge[0]].position];
-        b = posList[subMeshList[i].wedgeList[subMeshList[i].triList[p].wedge[1]].position];
-        c = posList[subMeshList[i].wedgeList[subMeshList[i].triList[p].wedge[2]].position];
-        f = subMeshList[i].wedgeList[subMeshList[i].triList[p].wedge[0]].texUV;
-        g = subMeshList[i].wedgeList[subMeshList[i].triList[p].wedge[1]].texUV;
-        h = subMeshList[i].wedgeList[subMeshList[i].triList[p].wedge[2]].texUV;
-        zCPolygon* newPoly = mesh->AddPoly();
-        newPoly->AddVertex( mesh->AddVertexSmart( a ) );
-        newPoly->AddVertex( mesh->AddVertexSmart( b ) );
-        newPoly->AddVertex( mesh->AddVertexSmart( c ) );
-
-        newPoly->SetMapping( 0, f );
-        newPoly->SetMapping( 1, g );
-        newPoly->SetMapping( 2, h );
-        newPoly->polyPlane = subMeshList[i].triPlaneList[subMeshList[i].triPlaneIndexList[p]];
-        newPoly->SetMaterial( subMeshList[i].material );
-
-      };
     }
 
-    mesh->meshName = this->GetObjectName();
-    zCMesh::S_DeleteVertexMergeCache();
-    return mesh;
-  }
-
-
-  Array<zCMesh*> zCProgMeshProto::GetMeshListCollDet() {
-    Array<zCMesh*> meshList;
-
-    for( int i = 0; i < numSubMeshes; i++ ) {
-      if( subMeshList[i].material->noCollDet )
-        continue;
-
-      int numPoly = subMeshList[i].triList.GetNum();
-      zCMesh* mesh = new zCMesh();
-      zCMesh::S_InitVertexMergeCache( mesh );
-      mesh->AllocPolys( numPoly );
-      mesh->AllocVerts( numPoly * 3 );
-
-      for( int p = 0; p < numPoly; p++ ) {
-        zVEC3 a, b, c;
-        zVEC2	f, g, h;
-        a = posList[subMeshList[i].wedgeList[subMeshList[i].triList[p].wedge[0]].position];
-        b = posList[subMeshList[i].wedgeList[subMeshList[i].triList[p].wedge[1]].position];
-        c = posList[subMeshList[i].wedgeList[subMeshList[i].triList[p].wedge[2]].position];
-        f = subMeshList[i]        .wedgeList[subMeshList[i].triList[p].wedge[0]].texUV;
-        g = subMeshList[i]        .wedgeList[subMeshList[i].triList[p].wedge[1]].texUV;
-        h = subMeshList[i]        .wedgeList[subMeshList[i].triList[p].wedge[2]].texUV;
-
-        zCPolygon* newPoly = mesh->AddPoly();
-        newPoly->AddVertex( mesh->AddVertexSmart( a ) );
-        newPoly->AddVertex( mesh->AddVertexSmart( b ) );
-        newPoly->AddVertex( mesh->AddVertexSmart( c ) );
-
-        newPoly->SetMapping( 0, f );
-        newPoly->SetMapping( 1, g );
-        newPoly->SetMapping( 2, h );
-        newPoly->polyPlane = subMeshList[i].triPlaneList[subMeshList[i].triPlaneIndexList[p]];
-        newPoly->SetMaterial( subMeshList[i].material );
-
-        meshList.Insert( mesh );
-      }
-
-      zCMesh::S_DeleteVertexMergeCache();
-    }
-
-    return meshList;
-  }
-
-  // Poly method (no optimize)
-  inline btBvhTriangleMeshShape* ProgMeshProtoToConvexBvhTriangleMeshShape( zCProgMeshProto* proto ) {
-    zCMesh* mesh = proto->GetMesh( 0 );
-    if( !mesh ) {
-      Message::Fatal( "No mesh data - " + proto->GetVisualName() );
+    if( meshInterface->getNumTriangles() == 0 ) {
+      delete meshInterface;
       return Null;
     }
-  
+
+    btConvexTriangleMeshShape* triangleMeshShape = new btConvexTriangleMeshShape( meshInterface );
+    triangleMeshShape->setMargin( 0.0 );
+    return triangleMeshShape;
+  }
+
+
+  // Poly method (no optimize)
+  btBvhTriangleMeshShape* zCProgMeshProto::GetBtBvhTriangleMesh() {
     btTriangleMesh* meshInterface = new btTriangleMesh();
-    for( int i = 0; i < mesh->numPoly; i++ ) {
-      zCPolygon* poly = mesh->polyList[i];
-      if( poly && poly->material && poly->material->noCollDet )
+    for( int subMeshID = 0; subMeshID < numSubMeshes; subMeshID++ ) {
+      auto material = subMeshList[subMeshID].material;
+      if( material && material->noCollDet )
         continue;
 
-      meshInterface->addTriangle(
-        poly->vertex[0]->position.ToBtVector3(),
-        poly->vertex[1]->position.ToBtVector3(),
-        poly->vertex[2]->position.ToBtVector3()
-      );
+      for( int triID = 0; triID < subMeshList[subMeshID].triList.GetNum(); triID++ ) {
+        meshInterface->addTriangle(
+          GetVertex( subMeshID, triID, VA ).ToBtVector3(),
+          GetVertex( subMeshID, triID, VB ).ToBtVector3(),
+          GetVertex( subMeshID, triID, VC ).ToBtVector3()
+        );
+      }
     }
-
-    mesh->Release();
 
     if( meshInterface->getNumTriangles() == 0 ) {
       delete meshInterface;
@@ -185,7 +89,7 @@ namespace GOTHIC_ENGINE {
   }
 
 
-
+#if 0
   inline Array<btBvhTriangleMeshShape*> ProgMeshProtoToConvexBvhTriangleMeshShapeList( zCProgMeshProto* proto ) {
     Array<btBvhTriangleMeshShape*> triangleMeshShapeList;
 
@@ -214,6 +118,7 @@ namespace GOTHIC_ENGINE {
 
     return triangleMeshShapeList;
   }
+#endif
 
 
   inline zCProgMeshProto* LoadPhysicalModel( const zSTRING& fileName3DS ) {
@@ -244,7 +149,7 @@ namespace GOTHIC_ENGINE {
       return Null;
 
     btTransform btTrafo = Mat4ToBtTransform( trafo );
-    btConvexTriangleMeshShape* trimesh = ProgMeshProtoToConvexTriangleMeshShape( proto );
+    btConvexTriangleMeshShape* trimesh = proto->GetBtTriangleMesh();
     btVector3 inertia( 0.0, 0.0, 0.0 );
     if( useInertia && mass != 0.0 )
       trimesh->calculateLocalInertia( mass, inertia );
@@ -278,7 +183,7 @@ namespace GOTHIC_ENGINE {
       return Null;
 
     btTransform btTrafo = Mat4ToBtTransform( trafo );
-    btConvexHullShape* hullMesh = ProgMeshProtoToConvexHullShape( proto );
+    btConvexHullShape* hullMesh = proto->GetBtHullMesh();
     btVector3 inertia( 0.0, 0.0, 0.0 );
     if( useInertia && mass != 0.0 )
       hullMesh->calculateLocalInertia( mass, inertia );
@@ -312,7 +217,7 @@ namespace GOTHIC_ENGINE {
       return Null;
 
     btTransform btTrafo = Mat4ToBtTransform( trafo );
-    btBvhTriangleMeshShape* trimesh = ProgMeshProtoToConvexBvhTriangleMeshShape( proto );
+    btBvhTriangleMeshShape* trimesh = proto->GetBtBvhTriangleMesh();
     btVector3 inertia( 0.0, 0.0, 0.0 );
     if( useInertia && mass != 0.0 )
       trimesh->calculateLocalInertia( mass, inertia );
@@ -332,7 +237,7 @@ namespace GOTHIC_ENGINE {
 
 
 
-
+#if 0
   zPhysicalCompoundMesh* zPhysicalCompoundMesh::CreateCompoundMesh( const zSTRING& fileName3DS, const zVEC3& position, float mass, bool useInertia ) {
     zMAT4 trafo;
     trafo.MakeIdentity();
@@ -376,7 +281,7 @@ namespace GOTHIC_ENGINE {
 
     return polyMesh;
   }
-
+#endif
 
 
 

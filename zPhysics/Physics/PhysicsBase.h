@@ -7,6 +7,7 @@ namespace GOTHIC_ENGINE {
     virtual btRigidBody* GetRigidBody() = 0;
 
   protected:
+    zPhysicalObjectBase();
     virtual ~zPhysicalObjectBase();
   };
 

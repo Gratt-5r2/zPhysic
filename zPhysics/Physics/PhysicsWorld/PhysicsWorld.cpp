@@ -103,8 +103,10 @@ namespace GOTHIC_ENGINE {
 
 
   zPhysicalWorld::~zPhysicalWorld() {
-    ObjectList.ReleaseData();
-    ObjectList.Clear();
+    for( uint i = 0; ObjectList.GetNum() > 0; i++ )
+      RemoveObject( ObjectList[0] );
+
+    World->removeRigidBody( RigidBody );
 
     delete Dispatcher;
     delete CollisionConfiguration;

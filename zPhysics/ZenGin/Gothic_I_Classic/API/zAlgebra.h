@@ -241,11 +241,11 @@ namespace Gothic_I_Classic {
       n[2] = a0[2];
     }
 
-    explicit operator btVector3() const
+    btVector3 ToBtVector3() const
     {
       btVector3 vec(
         n[0],
-        n[1],
+        n[1], 
         n[2]
       );
 

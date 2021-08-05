@@ -2,21 +2,36 @@
 // Union SOURCE file
 
 namespace GOTHIC_ENGINE {
-	Array<zPhysicalVobProvider*> zPhysicalVobProvider::Providers;
+	bool ProviderSortFuncByVob( zPhysicalVobProvider* const& left, zCVob& const right ) {
+		return left->GetConnectedVob() > &right;
+	}
+
+	bool ProviderSortFunc( zPhysicalVobProvider* const& left, zPhysicalVobProvider* const& right ) {
+		return ProviderSortFuncByVob( left, *right->GetConnectedVob() );
+	}
+
+  bool operator == ( zPhysicalVobProvider* left, const zCVob& right ) {
+		return left->GetConnectedVob() == &right;
+	}
 
 
-	zPhysicalVobProvider::zPhysicalVobProvider( zPhysicalMesh* physicalMesh, zCVob* connectedVob, const zPhysicalVobProviderType& type ) {
+	ArraySorted<zPhysicalVobProvider*, ProviderSortFunc> zPhysicalVobProvider::Providers;
+
+
+	zPhysicalVobProvider::zPhysicalVobProvider( zPhysicalMesh* physicalMesh, zCVob* connectedVob, const zPhysicalVobProviderType& type ) : zPhysicalObjectBase() {
 		PhysicalMesh = physicalMesh;
 		PhysicalMesh->AddRef();
 		ConnectedVob = connectedVob;
 		Type = type;
-		ConnectedVob->AddRef();
-		Providers += this;
+		Providers.Insert( this );
+
+		EnableVobReference = dynamic_cast<zCVobPhysical*>( connectedVob ) == Null;
+		if( EnableVobReference )
+			ConnectedVob->AddRef();
 	}
 
 
 	void zPhysicalVobProvider::Update() {
-#if 1
 		if( Type == zVOB_PROVIDER_PHYSICAL_TRAFO ) {
 			btTransform& btTrafo = PhysicalMesh->GetRigidBody()->getWorldTransform();
 			zMAT4 zTrafo = BtTransformToMat4( btTrafo );
@@ -29,18 +44,6 @@ namespace GOTHIC_ENGINE {
 			btTransform btTrafo = Mat4ToBtTransform( zTrafo );
 			PhysicalMesh->GetRigidBody()->setWorldTransform( btTrafo );
 		}
-#else
-		// zMAT4& vobTrafo = ConnectedVob->GetNewTrafoObjToWorld();
-		zMAT4 newVobTrafo;
-		newVobTrafo.MakeIdentity();
-		btTransform& meshTrafo = PhysicalMesh->GetRigidBody()->getWorldTransform();
-		meshTrafo.getOpenGLMatrix( (float*)&newVobTrafo );
-		ConnectedVob->SetTrafoObjToWorld( newVobTrafo );
-
-		btVector3 meshOrigin = meshTrafo.getOrigin();
-		zVEC3 vobOrigin( meshOrigin[VX], meshOrigin[VY], meshOrigin[VZ] );
-		zlineCache->Line3D( vobOrigin, vobOrigin + zVEC3( 0.0f, 35.0f, 0.0f ), GFX_RED, False );
-#endif
 	}
 
 
@@ -54,15 +57,58 @@ namespace GOTHIC_ENGINE {
 	}
 
 
-	zPhysicalMesh* zPhysicalVobProvider::GetPhysicalMesh() {
+	void zPhysicalVobProvider::SetPosition( const zVEC3& vec ) {
+		PhysicalMesh->SetPosition( vec );
+	}
+
+
+	void zPhysicalVobProvider::SetMatrix( const zMAT4& trafo ) {
+		PhysicalMesh->SetMatrix( trafo );
+	}
+
+
+	void zPhysicalVobProvider::SetEnableVobReference( bool enable ) {
+		if( EnableVobReference && !enable ) {
+			ConnectedVob->Release();
+			EnableVobReference = enable;
+		}
+		else if( !EnableVobReference && enable ) {
+			ConnectedVob->AddRef();
+			EnableVobReference = enable;
+		}
+	}
+
+
+	zPhysicalMesh* zPhysicalVobProvider::GetPhysicalMesh() const {
 		return PhysicalMesh;
 	}
 
 
+	zCVob* zPhysicalVobProvider::GetConnectedVob() const {
+		return ConnectedVob;
+	}
+
+
+	btRigidBody* zPhysicalVobProvider::GetRigidBody() {
+		return PhysicalMesh->GetRigidBody();
+	}
+
+
 	zPhysicalVobProvider::~zPhysicalVobProvider() {
-		Providers -= this;
-		ConnectedVob->Release();
+		if( EnableVobReference )
+			ConnectedVob->Release();
+
 		PhysicalMesh->Release();
+		Providers.Remove( this );
+	}
+
+
+	zPhysicalVobProvider* zPhysicalVobProvider::FindProvider( zCVob* vob ) {
+		uint index = Providers.SearchEqual<ProviderSortFuncByVob>( *vob );
+		if( index == Invalid )
+			return Null;
+
+		return Providers[index];
 	}
 
 
@@ -73,6 +119,6 @@ namespace GOTHIC_ENGINE {
 
 
 	void zPhysicalVobProvider::DeleteAllProvider() {
-		Providers.DeleteData();
+		Providers.ReleaseData();
 	}
 }

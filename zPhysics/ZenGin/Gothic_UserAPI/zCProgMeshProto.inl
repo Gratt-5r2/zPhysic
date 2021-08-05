@@ -3,5 +3,7 @@
 // User API for zCProgMeshProto
 // Add your methods here
 
-zCMesh* GetMeshCollDet();
-Array<zCMesh*> GetMeshListCollDet();
+btConvexHullShape* GetBtHullMesh();
+btConvexTriangleMeshShape* GetBtTriangleMesh();
+btBvhTriangleMeshShape* GetBtBvhTriangleMesh();
+const zVEC3& GetVertex( const int& subMeshID, const int& triID, const int& vertID );

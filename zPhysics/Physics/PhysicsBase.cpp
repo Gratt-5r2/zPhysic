@@ -2,8 +2,15 @@
 // Union SOURCE file
 
 namespace GOTHIC_ENGINE {
-  zPhysicalObjectBase::~zPhysicalObjectBase() {
+  static uint physicalMeshesAllocated = 0;
 
+  zPhysicalObjectBase::zPhysicalObjectBase() : zCObject() {
+    physicalMeshesAllocated++;
+  }
+
+  zPhysicalObjectBase::~zPhysicalObjectBase() {
+    if( --physicalMeshesAllocated == 0 )
+      cmd << Col16( CMD_INT | CMD_GREEN ) << "All physical vobs deleted" << Col16() << endl;
   }
 
   btTransform Mat4ToBtTransform( zMAT4 zTrafo ) {
@@ -43,7 +50,6 @@ namespace GOTHIC_ENGINE {
     zVEC3 vobPositionWorld = trafo.GetTranslation();
     zVEC3 centerOfVob = vobPositionWorld + offset;
     trafo.SetTranslation( centerOfVob );
-    cmd << string::Combine( "%i  %i  %i", (int)offset[VX], (int)offset[VY], (int)offset[VY] ) << endl;
     return trafo;
   }
 }

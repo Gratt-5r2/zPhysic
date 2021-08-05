@@ -241,17 +241,6 @@ namespace Gothic_II_Addon {
       n[2] = a0[2];
     }
 
-    explicit operator btVector3() const
-    {
-      btVector3 vec(
-        n[0],
-        n[1],
-        n[2]
-      );
-
-      return vec;
-    }
-
     btVector3 ToBtVector3() const
     {
       btVector3 vec(

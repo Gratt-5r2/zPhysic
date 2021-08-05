@@ -9,6 +9,7 @@
 #include "Physics/SimpleShapes/SimpleShapes.cpp"
 #include "Physics/CompoundShapes/CompoundShapes.cpp"
 #include "Physics/VobProvider/VobProvider.cpp"
+#include "Physics/PhysicalVobs/PhysicalVobs.cpp"
 #include "Plugin.cpp"
 #pragma endregion
 

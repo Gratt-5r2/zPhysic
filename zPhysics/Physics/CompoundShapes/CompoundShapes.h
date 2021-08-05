@@ -6,7 +6,7 @@ namespace GOTHIC_ENGINE {
   class zPhysicalTriangleMesh : public zPhysicalMesh {
   protected:
     btConvexTriangleMeshShape* PolyMesh;
-    zPhysicalTriangleMesh() {}
+    zPhysicalTriangleMesh() : zPhysicalMesh() {}
   public:
 
     static zPhysicalTriangleMesh* CreatePolyMesh( const zSTRING& fileName3DS, const zVEC3& position = zVEC3( 0.0f, 0.0f, 0.0f ), float mass = 0.0f, bool useInertia = false );
@@ -17,7 +17,7 @@ namespace GOTHIC_ENGINE {
   class zPhysicalHullMesh : public zPhysicalMesh {
   protected:
     btConvexHullShape* PolyMesh;
-    zPhysicalHullMesh() {}
+    zPhysicalHullMesh() : zPhysicalMesh() {}
   public:
 
     static zPhysicalHullMesh* CreatePolyMesh( const zSTRING& fileName3DS, const zVEC3& position = zVEC3( 0.0f, 0.0f, 0.0f ), float mass = 0.0f, bool useInertia = false );
@@ -28,7 +28,7 @@ namespace GOTHIC_ENGINE {
   class zPhysicalBvhTriangleMesh : public zPhysicalMesh {
   protected:
     btBvhTriangleMeshShape* PolyMesh;
-    zPhysicalBvhTriangleMesh() {}
+    zPhysicalBvhTriangleMesh() : zPhysicalMesh() {}
   public:
 
     static zPhysicalBvhTriangleMesh* CreatePolyMesh( const zSTRING& fileName3DS, const zVEC3& position = zVEC3( 0.0f, 0.0f, 0.0f ), float mass = 0.0f, bool useInertia = false );
@@ -39,7 +39,7 @@ namespace GOTHIC_ENGINE {
   class zPhysicalCompoundMesh : public zPhysicalMesh {
   protected:
     btCompoundShape* CompoPolyMesh;
-    zPhysicalCompoundMesh() {}
+    zPhysicalCompoundMesh() : zPhysicalMesh() {}
   public:
 
     static zPhysicalCompoundMesh* CreateCompoundMesh( const zSTRING& fileName3DS, const zVEC3& position = zVEC3( 0.0f, 0.0f, 0.0f ), float mass = 0.0f, bool useInertia = false );

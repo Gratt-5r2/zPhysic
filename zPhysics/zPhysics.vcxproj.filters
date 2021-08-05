@@ -232,6 +232,9 @@
     <Filter Include="Plugin\Workspace\Physics\CompoundShapes">
       <UniqueIdentifier>{f322fca2-2073-4b17-8f32-f291224b9c56}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Plugin\Workspace\Physics\PhysicalVobs">
+      <UniqueIdentifier>{14dbade7-3fd3-4ff1-aaa2-0fb94bf0ef53}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Interface.cpp">
@@ -2834,6 +2837,12 @@
     </ClInclude>
     <ClInclude Include="Physics\CompoundShapes\CompoundShapes.cpp">
       <Filter>Plugin\Workspace\Physics\CompoundShapes</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\PhysicalVobs\PhysicalVobs.h">
+      <Filter>Plugin\Workspace\Physics\PhysicalVobs</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\PhysicalVobs\PhysicalVobs.cpp">
+      <Filter>Plugin\Workspace\Physics\PhysicalVobs</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

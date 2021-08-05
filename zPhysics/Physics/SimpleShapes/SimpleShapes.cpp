@@ -2,11 +2,7 @@
 // Union SOURCE file
 
 namespace GOTHIC_ENGINE {
-  zPhysicalMesh::~zPhysicalMesh() {
-    btMotionState* state = RigidBody->getMotionState();
-    btCollisionShape* shape = RigidBody->getCollisionShape();
-    delete shape;
-    delete state;
+  zPhysicalMesh::zPhysicalMesh() : zPhysicalObjectBase() {
   }
 
 
@@ -15,8 +11,28 @@ namespace GOTHIC_ENGINE {
   }
 
 
+  void zPhysicalMesh::SetPosition( const zVEC3& vec ) {
+    btTransform& trafo = RigidBody->getWorldTransform();
+    trafo.setOrigin( vec.ToBtVector3() );
+    RigidBody->setWorldTransform( trafo );
+  }
+
+
+  void zPhysicalMesh::SetMatrix( const zMAT4& trafo ) {
+    RigidBody->setWorldTransform( Mat4ToBtTransform( trafo ) );
+  }
+
+
   btRigidBody* zPhysicalMesh::GetRigidBody() {
     return RigidBody;
+  }
+
+
+  zPhysicalMesh::~zPhysicalMesh() {
+    btMotionState* state = RigidBody->getMotionState();
+    btCollisionShape* shape = RigidBody->getCollisionShape();
+    delete shape;
+    delete state;
   }
 
 

@@ -362,3 +362,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/zPhysics/G1 Release
+/zPhysics/G2A Release
+/zPhysics/MP Release

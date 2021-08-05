@@ -8,6 +8,7 @@
 #include "Physics/SimpleShapes/SimpleShapes.h"
 #include "Physics/CompoundShapes/CompoundShapes.h"
 #include "Physics/VobProvider/VobProvider.h"
+#include "Physics/PhysicalVobs/PhysicalVobs.h"
 #include "Plugin.h"
 #pragma endregion
 

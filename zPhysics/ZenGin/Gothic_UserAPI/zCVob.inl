@@ -5,3 +5,4 @@
 
 void ThisVobAddedToWorld_Union( zCWorld* );
 void ThisVobRemovedFromWorld_Union( zCWorld* );
+void EndMovement_Union( int );
