@@ -19,8 +19,14 @@ namespace GOTHIC_ENGINE {
 
   void Game_Loop() {
     zPhysicalVobProvider::UpdateAllProvider();
+    zPhysicalNpcProvider::UpdateAllProvider();
     PhysicalWorld->DoPhysics( ztimer->frameTimeFloat );
     screen->Print( 400, 800, Z "Frame time: " + Z string( ztimer->frameTimeFloat ) );
+    zPhysicalNpcProvider::PostUpdateAllProvider();
+
+    if( zKeyPressed( KEY_V ) )
+      Sleep( 12 );
+
 
     // DELETE ME
     if( zKeyToggled( KEY_U ) ) {
@@ -32,12 +38,14 @@ namespace GOTHIC_ENGINE {
       vob->SetCollDetDyn( True );
       vob->SetVisual( "BALL.3DS" );
       ogame->GetGameWorld()->AddVob( vob );
+      sphere->GetRigidBody()->setFriction( 0.8f );
       zPhysicalVobProvider* vobConnector = new zPhysicalVobProvider( sphere, vob );
       sphere->Release();
       vobConnector->SetVelocity( camVec );
       PhysicalWorld->AddObject( vobConnector );
       vobConnector->Release();
     }
+
 
     if( zKeyToggled( KEY_I ) ) {
       zVEC3 camAt  = ogame->GetCameraVob()->GetAtVectorWorld();
@@ -46,11 +54,12 @@ namespace GOTHIC_ENGINE {
       zMAT4 trafo  = ogame->GetCameraVob()->trafoObjToWorld;
       trafo.SetTranslation( camPos );
 
-      zPhysicalBox* sphere = zPhysicalBox::CreateBox( zVEC3( 60.0f, 35.0f, 40.0f ), trafo, 150.0, true );
+      zPhysicalBox* sphere = zPhysicalBox::CreateBox( zVEC3( 60.0f, 35.0f, 40.0f ), trafo, 350.0, true );
       zCVob* vob = new zCVob();
       vob->SetCollDetDyn( True );
       vob->SetVisual( "BOX2.3DS" );
       ogame->GetGameWorld()->AddVob( vob );
+      sphere->GetRigidBody()->setFriction( 0.8f );
       zPhysicalVobProvider* vobConnector = new zPhysicalVobProvider( sphere, vob );
       sphere->Release();
       vobConnector->SetVelocity( camVec );
@@ -58,6 +67,7 @@ namespace GOTHIC_ENGINE {
       vobConnector->Release();
     }
 
+    return;
     if( zKeyToggled( KEY_O ) ) {
       // zVEC3 camAt  = ogame->GetCameraVob()->GetAtVectorWorld();
       // zVEC3 camPos = ogame->GetCameraVob()->GetPositionWorld() + camAt * 100.0f;

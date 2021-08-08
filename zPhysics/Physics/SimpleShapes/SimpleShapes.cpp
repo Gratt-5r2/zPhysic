@@ -2,44 +2,6 @@
 // Union SOURCE file
 
 namespace GOTHIC_ENGINE {
-  zPhysicalMesh::zPhysicalMesh() : zPhysicalObjectBase() {
-  }
-
-
-  void zPhysicalMesh::SetVelocity( const zVEC3& vec ) {
-    RigidBody->setLinearVelocity( vec.ToBtVector3() );
-  }
-
-
-  void zPhysicalMesh::SetPosition( const zVEC3& vec ) {
-    btTransform& trafo = RigidBody->getWorldTransform();
-    trafo.setOrigin( vec.ToBtVector3() );
-    RigidBody->setWorldTransform( trafo );
-  }
-
-
-  void zPhysicalMesh::SetMatrix( const zMAT4& trafo ) {
-    RigidBody->setWorldTransform( Mat4ToBtTransform( trafo ) );
-  }
-
-
-  btRigidBody* zPhysicalMesh::GetRigidBody() {
-    return RigidBody;
-  }
-
-
-  zPhysicalMesh::~zPhysicalMesh() {
-    btMotionState* state = RigidBody->getMotionState();
-    btCollisionShape* shape = RigidBody->getCollisionShape();
-    delete shape;
-    delete state;
-  }
-
-
-
-
-
-
   zPhysicalSphere* zPhysicalSphere::CreateSphere( float radius, const zVEC3& position, float mass, bool useInertia ) {
     zMAT4 trafo;
     trafo.MakeIdentity();
@@ -61,12 +23,10 @@ namespace GOTHIC_ENGINE {
     // body->setCollisionFlags();
 
     zPhysicalSphere* sphere = new zPhysicalSphere();
-    sphere->Sphere = shape;
+    sphere->CollisionShape = shape;
     sphere->RigidBody = body;
     return sphere;
   }
-
-
 
 
 
@@ -91,12 +51,10 @@ namespace GOTHIC_ENGINE {
     btRigidBody* body = new btRigidBody( rigidBodyInfo );
 
     zPhysicalBox* box = new zPhysicalBox();
-    box->Box = shape;
+    box->CollisionShape = shape;
     box->RigidBody = body;
     return box;
   }
-
-
 
 
 
@@ -121,11 +79,10 @@ namespace GOTHIC_ENGINE {
     btRigidBody* body = new btRigidBody( rigidBodyInfo );
 
     zPhysicalCylinder* cylinder = new zPhysicalCylinder();
-    cylinder->Cylinder = shape;
+    cylinder->CollisionShape = shape;
     cylinder->RigidBody = body;
     return cylinder;
   }
-
 
 
 
@@ -151,8 +108,37 @@ namespace GOTHIC_ENGINE {
     btRigidBody* body = new btRigidBody( rigidBodyInfo );
    
     zPhysicalCone* cone = new zPhysicalCone();
-    cone->Cone = shape;
+    cone->CollisionShape = shape;
     cone->RigidBody = body;
     return cone;
+  }
+
+
+
+
+
+  zPhysicalCapsule* zPhysicalCapsule::CreateCapsule( const float& radius, const float& height, const zVEC3& position, float mass, bool useInertia ) {
+    zMAT4 trafo;
+    trafo.MakeIdentity();
+    trafo.SetTranslation( position );
+    return CreateCapsule( radius, height, trafo, mass, useInertia );
+  }
+
+
+  zPhysicalCapsule* zPhysicalCapsule::CreateCapsule( const float& radius, const float& height, const zMAT4& trafo, float mass, bool useInertia ) {
+    btTransform btTrafo = Mat4ToBtTransform( trafo );
+    btCapsuleShape* shape = new btCapsuleShape( radius, height );
+    btVector3 inertia( 0.0, 0.0, 0.0 );
+    if( useInertia && mass != 0.0 )
+      shape->calculateLocalInertia( mass, inertia );
+
+    btMotionState* motionState = new btDefaultMotionState( btTrafo );
+    btRigidBody::btRigidBodyConstructionInfo rigidBodyInfo( mass, motionState, shape, inertia );
+    btRigidBody* body = new btRigidBody( rigidBodyInfo );
+
+    zPhysicalCapsule* capsule = new zPhysicalCapsule();
+    capsule->CollisionShape = shape;
+    capsule->RigidBody = body;
+    return capsule;
   }
 }

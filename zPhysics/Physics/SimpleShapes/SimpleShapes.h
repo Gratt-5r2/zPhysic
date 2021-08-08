@@ -2,24 +2,9 @@
 // Union HEADER file
 
 namespace GOTHIC_ENGINE {
-  class zPhysicalMesh : public zPhysicalObjectBase {
+  class zPhysicalSphere : public zPhysicalRigidMesh {
   protected:
-    btRigidBody* RigidBody;
-    zPhysicalMesh();
-  public:
-
-    virtual void SetVelocity( const zVEC3& vec );
-    virtual void SetPosition( const zVEC3& vec );
-    virtual void SetMatrix( const zMAT4& trafo );
-    virtual btRigidBody* GetRigidBody();
-    virtual ~zPhysicalMesh();
-  };
-
-
-  class zPhysicalSphere : public zPhysicalMesh {
-  protected:
-    btSphereShape* Sphere;
-    zPhysicalSphere() : zPhysicalMesh() {}
+    zPhysicalSphere() : zPhysicalRigidMesh() {}
   public:
 
     static zPhysicalSphere* CreateSphere( float radius, const zVEC3& position = zVEC3( 0.0f, 0.0f, 0.0f ), float mass = 0.0f, bool useInertia = false );
@@ -27,10 +12,9 @@ namespace GOTHIC_ENGINE {
   };
 
 
-  class zPhysicalBox : public zPhysicalMesh {
+  class zPhysicalBox : public zPhysicalRigidMesh {
   protected:
-    btBoxShape* Box;
-    zPhysicalBox() : zPhysicalMesh() {}
+    zPhysicalBox() : zPhysicalRigidMesh() {}
   public:
 
     static zPhysicalBox* CreateBox( const zVEC3& halfExtents, const zVEC3& position = zVEC3( 0.0f, 0.0f, 0.0f ), float mass = 0.0f, bool useInertia = false );
@@ -38,10 +22,9 @@ namespace GOTHIC_ENGINE {
   };
 
 
-  class zPhysicalCylinder : public zPhysicalMesh {
+  class zPhysicalCylinder : public zPhysicalRigidMesh {
   protected:
-    btCylinderShape* Cylinder;
-    zPhysicalCylinder() : zPhysicalMesh() {}
+    zPhysicalCylinder() : zPhysicalRigidMesh() {}
   public:
 
     static zPhysicalCylinder* CreateCylinder( const zVEC3& halfExtents, const zVEC3& position = zVEC3( 0.0f, 0.0f, 0.0f ), float mass = 0.0f, bool useInertia = false );
@@ -49,13 +32,22 @@ namespace GOTHIC_ENGINE {
   };
 
 
-  class zPhysicalCone : public zPhysicalMesh {
+  class zPhysicalCone : public zPhysicalRigidMesh {
   protected:
-    btConeShape* Cone;
-    zPhysicalCone() : zPhysicalMesh() {}
+    zPhysicalCone() : zPhysicalRigidMesh() {}
   public:
 
     static zPhysicalCone* CreateCone( const float& radius, const float& height, const zVEC3& position = zVEC3( 0.0f, 0.0f, 0.0f ), float mass = 0.0f, bool useInertia = false );
     static zPhysicalCone* CreateCone( const float& radius, const float& height, const zMAT4& trafo, float mass = 0.0f, bool useInertia = false );
+  };
+
+
+  class zPhysicalCapsule : public zPhysicalRigidMesh {
+  protected:
+    zPhysicalCapsule() : zPhysicalRigidMesh() {}
+  public:
+
+    static zPhysicalCapsule* CreateCapsule( const float& radius, const float& height, const zVEC3& position = zVEC3( 0.0f, 0.0f, 0.0f ), float mass = 0.0f, bool useInertia = false );
+    static zPhysicalCapsule* CreateCapsule( const float& radius, const float& height, const zMAT4& trafo, float mass = 0.0f, bool useInertia = false );
   };
 }

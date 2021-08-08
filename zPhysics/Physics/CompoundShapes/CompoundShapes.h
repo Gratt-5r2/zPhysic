@@ -3,10 +3,9 @@
 #define USE_VERTEX_METHOD
 
 namespace GOTHIC_ENGINE {
-  class zPhysicalTriangleMesh : public zPhysicalMesh {
+  class zPhysicalTriangleMesh : public zPhysicalRigidMesh {
   protected:
-    btConvexTriangleMeshShape* PolyMesh;
-    zPhysicalTriangleMesh() : zPhysicalMesh() {}
+    zPhysicalTriangleMesh() : zPhysicalRigidMesh() {}
   public:
 
     static zPhysicalTriangleMesh* CreatePolyMesh( const zSTRING& fileName3DS, const zVEC3& position = zVEC3( 0.0f, 0.0f, 0.0f ), float mass = 0.0f, bool useInertia = false );
@@ -14,10 +13,9 @@ namespace GOTHIC_ENGINE {
   };
 
 
-  class zPhysicalHullMesh : public zPhysicalMesh {
+  class zPhysicalHullMesh : public zPhysicalRigidMesh {
   protected:
-    btConvexHullShape* PolyMesh;
-    zPhysicalHullMesh() : zPhysicalMesh() {}
+    zPhysicalHullMesh() : zPhysicalRigidMesh() {}
   public:
 
     static zPhysicalHullMesh* CreatePolyMesh( const zSTRING& fileName3DS, const zVEC3& position = zVEC3( 0.0f, 0.0f, 0.0f ), float mass = 0.0f, bool useInertia = false );
@@ -25,24 +23,12 @@ namespace GOTHIC_ENGINE {
   };
 
 
-  class zPhysicalBvhTriangleMesh : public zPhysicalMesh {
+  class zPhysicalBvhTriangleMesh : public zPhysicalRigidMesh {
   protected:
-    btBvhTriangleMeshShape* PolyMesh;
-    zPhysicalBvhTriangleMesh() : zPhysicalMesh() {}
+    zPhysicalBvhTriangleMesh() : zPhysicalRigidMesh() {}
   public:
 
     static zPhysicalBvhTriangleMesh* CreatePolyMesh( const zSTRING& fileName3DS, const zVEC3& position = zVEC3( 0.0f, 0.0f, 0.0f ), float mass = 0.0f, bool useInertia = false );
     static zPhysicalBvhTriangleMesh* CreatePolyMesh( const zSTRING& fileName3DS, const zMAT4& trafo, float mass = 0.0f, bool useInertia = false );
-  };
-
-
-  class zPhysicalCompoundMesh : public zPhysicalMesh {
-  protected:
-    btCompoundShape* CompoPolyMesh;
-    zPhysicalCompoundMesh() : zPhysicalMesh() {}
-  public:
-
-    static zPhysicalCompoundMesh* CreateCompoundMesh( const zSTRING& fileName3DS, const zVEC3& position = zVEC3( 0.0f, 0.0f, 0.0f ), float mass = 0.0f, bool useInertia = false );
-    static zPhysicalCompoundMesh* CreateCompoundMesh( const zSTRING& fileName3DS, const zMAT4& trafo, float mass = 0.0f, bool useInertia = false );
   };
 }

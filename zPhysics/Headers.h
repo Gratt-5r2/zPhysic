@@ -7,6 +7,7 @@
 #include "Physics/PhysicsWorld/PhysicsWorld.h"
 #include "Physics/SimpleShapes/SimpleShapes.h"
 #include "Physics/CompoundShapes/CompoundShapes.h"
+#include "Physics/SoftShapes/SoftShapes.h"
 #include "Physics/VobProvider/VobProvider.h"
 #include "Physics/PhysicalVobs/PhysicalVobs.h"
 #include "Plugin.h"

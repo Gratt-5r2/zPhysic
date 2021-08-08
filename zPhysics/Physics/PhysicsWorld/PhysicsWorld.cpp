@@ -3,12 +3,12 @@
 
 namespace GOTHIC_ENGINE {
   zPhysicalWorld::zPhysicalWorld() {
-    CollisionConfiguration = new btDefaultCollisionConfiguration();
+    CollisionConfiguration = new btSoftBodyRigidBodyCollisionConfiguration();
     Dispatcher = new btCollisionDispatcher( CollisionConfiguration );
     BroadphaseInterface = new btDbvtBroadphase();
     ConstraintSolver = new btSequentialImpulseConstraintSolver();
-    World = new btDiscreteDynamicsWorld( Dispatcher, BroadphaseInterface, ConstraintSolver, CollisionConfiguration );
-
+    btSoftBodySolver* SoftBodySolver = new btDefaultSoftBodySolver();
+    World = new btSoftRigidDynamicsWorld( Dispatcher, BroadphaseInterface, ConstraintSolver, CollisionConfiguration, SoftBodySolver );
     World->setGravity( btVector3( 0.0, -9.832, 0.0 ) );
   }
 
@@ -82,14 +82,23 @@ namespace GOTHIC_ENGINE {
     btRigidBody* rigidBody = object->GetRigidBody();
     if( rigidBody )
       World->addRigidBody( rigidBody );
+
+    btSoftBody* softBody = object->GetSoftBody();
+    if( softBody )
+      World->addSoftBody( softBody );
   }
 
 
   void zPhysicalWorld::RemoveObject( zPhysicalObjectBase* object ) {
     ObjectList -= object;
+
     btRigidBody* rigidBody = object->GetRigidBody();
     if( rigidBody )
       World->removeRigidBody( rigidBody );
+
+    btSoftBody* softBody = object->GetSoftBody();
+    if( softBody )
+      World->removeSoftBody( softBody );
 
     object->Release();
   }
@@ -99,6 +108,11 @@ namespace GOTHIC_ENGINE {
     static float fixedFrameTime = 1.0f / 60.0f;
     float timeStep = fixedFrameTime * time;
     World->stepSimulation( timeStep, 1, timeStep );
+  }
+
+
+  btSoftRigidDynamicsWorld* zPhysicalWorld::GetDynamicsWorld() {
+    return World;
   }
 
 

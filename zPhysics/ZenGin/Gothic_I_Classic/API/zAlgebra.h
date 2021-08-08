@@ -407,7 +407,7 @@ namespace Gothic_I_Classic {
       );
     }
 
-	  float GetAngleXZ() {
+    float GetAngleXZ() {
       CalcAngle(n[0], n[2]);
     }
 
@@ -1004,7 +1004,7 @@ namespace Gothic_I_Classic {
       return *this;
     }
 
-	#define ROWCOL( i, j )       \
+  #define ROWCOL( i, j )       \
       self[i][0] * other[0][j] + \
       self[i][1] * other[1][j] + \
       self[i][2] * other[2][j] + \

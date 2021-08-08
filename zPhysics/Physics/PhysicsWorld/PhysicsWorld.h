@@ -5,7 +5,7 @@ namespace GOTHIC_ENGINE {
   class zPhysicalWorld {
     Array<zPhysicalObjectBase*> ObjectList;
     btRigidBody* RigidBody;
-    btDynamicsWorld* World;
+    btSoftRigidDynamicsWorld* World;
     btDispatcher* Dispatcher;
     btCollisionConfiguration* CollisionConfiguration;
     btBroadphaseInterface* BroadphaseInterface;
@@ -17,6 +17,7 @@ namespace GOTHIC_ENGINE {
     void AddObject( zPhysicalObjectBase* object );
     void RemoveObject( zPhysicalObjectBase* object );
     void DoPhysics( const float& time = 0.16f );
+    btSoftRigidDynamicsWorld* GetDynamicsWorld();
     virtual ~zPhysicalWorld();
   };
 }

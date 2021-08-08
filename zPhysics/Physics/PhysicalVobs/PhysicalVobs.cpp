@@ -7,36 +7,51 @@ namespace GOTHIC_ENGINE {
 
 
   zCVobPhysical::zCVobPhysical() : zCVob() {
-    Provider = Null;
-    IsPhysicEnabled = false;
-    Mass = 10.0f;
-    Physic = False;
-    Friction = 0.1f;
-    Restitution = 0.1f;
+    Provider         = Null;
+    PhysicsEnabled   = false;
+    Mass             = 10.0f;
+    Physics          = zPHY_METHOD_DISABLED;
+    Friction         = 0.7f;
+    Restitution      = 0.1f;
+    LinearVelocity   = 0.0f;
+    AngularVelocity  = 0.0f;
+    Shape            = zCOLL_METHOD_BOX;
   }
 
 
 
-  void zCVobPhysical::PhysicEnable() {
-    bool canEnablePhysic = Physic == 1 || (Physic == 2 && player->homeWorld);
+  void zCVobPhysical::PhysicsEnable() {
+    bool canEnablePhysic = Physics == zPHY_METHOD_ENABLED || zPHY_METHOD_ENABLED_PREVIEW || (Physics == zPHY_METHOD_ENABLED_INGAMEONLY && !IsOnEditor());
 
-    if( !Provider || IsPhysicEnabled || !canEnablePhysic )
+    if( !Provider || PhysicsEnabled || !canEnablePhysic )
       return;
 
+    auto rigidBody = Provider->GetRigidBody();
     PhysicalWorld->AddObject( Provider );
-    IsPhysicEnabled = true;
-    cmd << Col16( CMD_GREEN | CMD_INT ) << "Physic enabled" << Col16() << endl;
+    rigidBody->setWorldTransform( Mat4ToBtTransform( trafoObjToWorld ) );
+    rigidBody->setFriction( Friction );
+    rigidBody->setRestitution( Restitution );
+    rigidBody->setInterpolationLinearVelocity( LinearVelocity.ToBtVector3() );
+    rigidBody->setInterpolationAngularVelocity( AngularVelocity.ToBtVector3() );
+    PhysicsEnabled = true;
+    cmd << Col16( CMD_GREEN | CMD_INT ) << "Physics enabled" << Col16() << endl;
   }
 
 
 
-  void zCVobPhysical::PhysicDisable() {
-    if( !Provider || !IsPhysicEnabled )
+  void zCVobPhysical::PhysicsDisable() {
+    if( !Provider || !PhysicsEnabled )
       return;
 
-    IsPhysicEnabled = false;
+    PhysicsEnabled = false;
     PhysicalWorld->RemoveObject( Provider );
-    cmd << Col16( CMD_YELLOW | CMD_INT ) << "Physic disabled" << Col16() << endl;
+    cmd << Col16( CMD_YELLOW | CMD_INT ) << "Physics disabled" << Col16() << endl;
+  }
+
+
+
+  bool zCVobPhysical::IsPhysicsEnabled() const {
+    return PhysicsEnabled;
   }
 
 
@@ -66,19 +81,25 @@ namespace GOTHIC_ENGINE {
 
     if( method == zCOLL_METHOD_CYLINDER ) {
       zTBBox3D bbox = visual->GetBBox3D();
-      zPhysicalCylinder* physicalMesh = zPhysicalCylinder::CreateCylinder( bbox.maxs - bbox.mins, trafoObjToWorld, Mass, true );
+      zPhysicalCylinder* physicalMesh = zPhysicalCylinder::CreateCylinder( (bbox.maxs - bbox.mins) * 0.5f, trafoObjToWorld, Mass, true );
       return physicalMesh;
     }
 
     if( method == zCOLL_METHOD_CONE ) {
       zTBBox3D bbox = visual->GetBBox3D();
-      zPhysicalCone* physicalMesh = zPhysicalCone::CreateCone( (bbox.mins[VX] + bbox.mins[VZ]) * 0.5f, bbox.maxs[VY] - bbox.mins[VY], trafoObjToWorld, Mass, true );
+      zPhysicalCone* physicalMesh = zPhysicalCone::CreateCone( (bbox.mins[VX] + bbox.maxs[VZ]) * 0.5f, bbox.maxs[VY] - bbox.mins[VY], trafoObjToWorld, Mass, true );
       return physicalMesh;
     }
 
-    // zCOLL_METHOD_BOX
+    if( method == zCOLL_METHOD_CAPSULE ) {
+      zTBBox3D bbox = visual->GetBBox3D();
+      zPhysicalCapsule* physicalMesh = zPhysicalCapsule::CreateCapsule( (bbox.mins[VX] + bbox.maxs[VZ]) * 0.5f, bbox.maxs[VY] - bbox.mins[VY], trafoObjToWorld, Mass, true );
+      return physicalMesh;
+    }
+
+    // zCOLL_METHOD_BOX as Default
     zTBBox3D bbox = visual->GetBBox3D();
-    zPhysicalCylinder* physicalMesh = zPhysicalCylinder::CreateCylinder( bbox.maxs - bbox.mins, trafoObjToWorld, Mass, true );
+    zPhysicalBox* physicalMesh = zPhysicalBox::CreateBox( (bbox.maxs - bbox.mins) * 0.5f, trafoObjToWorld, Mass, true );
     return physicalMesh;
   }
 
@@ -86,20 +107,52 @@ namespace GOTHIC_ENGINE {
 
   void zCVobPhysical::SetPositionWorld( zVEC3 const& position ) {
     zCVob::SetPositionWorld( position );
-    Provider->SetPosition( position );
+    if( Provider )
+      Provider->SetPosition( position );
   }
 
 
 
   void zCVobPhysical::SetTrafoWorld( zMAT4 const& trafo ) {
     zCVob::SetTrafoObjToWorld( trafo );
-    Provider->SetMatrix( trafo );
+    if( Provider )
+      Provider->SetMatrix( trafo );
   }
 
 
 
   void zCVobPhysical::SetMass( const float& mass ) {
     Mass = mass;
+  }
+
+
+
+  zMAT4 zCVobPhysical::GetCorrectedAbMatrix() {
+    if( Physics == zPHY_METHOD_ENABLED_PREVIEW )
+      return zMAT4::GetIdentity();
+
+    if( Shape >= zCOLL_METHOD_VOBSHAPE )
+      return trafoObjToWorld;
+
+    zMAT4 trafoWorld = trafoObjToWorld;
+    zVEC3 translation = trafoWorld * BBoxOffset;
+    trafoWorld.SetTranslation( translation );
+    return trafoWorld;
+  }
+
+
+
+  void zCVobPhysical::SetCorrectedAbMatrix( const zMAT4& trafo ) {
+    if( Physics == zPHY_METHOD_ENABLED_PREVIEW )
+      return;
+
+    if( Shape >= zCOLL_METHOD_VOBSHAPE )
+      return SetTrafoObjToWorld( trafo );
+
+    zMAT4 trafoWorld = trafo;
+    zVEC3 translation = trafoWorld * -BBoxOffset;
+    trafoWorld.SetTranslation( translation );
+    SetTrafoObjToWorld( trafoWorld );
   }
 
 
@@ -114,7 +167,7 @@ namespace GOTHIC_ENGINE {
     if( visual == instance )
       return;
 
-    PhysicDisable();
+    PhysicsDisable();
     if( Provider ) {
       Provider->Release();
       Provider = Null;
@@ -126,16 +179,146 @@ namespace GOTHIC_ENGINE {
     }
 
     zCVob::SetVisual( instance );
+    BBoxOffset = visual->GetBBox3D().GetCenter();
     zPhysicalMesh* mesh = CreatePhysicalMesh( method, otherShape );
     if( !mesh )
       return;
 
     Provider = new zPhysicalVobProvider( mesh, this );
-    Provider->SetEnableVobReference( false );
     mesh->Release();
 
     if( homeWorld && homeWorld == ogame->GetGameWorld() )
-      PhysicEnable();
+      PhysicsEnable();
+  }
+
+
+
+  void zCVobPhysical::ApplyPhysics() {
+    if( !visual )
+      return;
+
+    PhysicsDisable();
+    if( Provider ) {
+      Provider->Release();
+      Provider = Null;
+    }
+
+    zPhysicalMesh* mesh = CreatePhysicalMesh( (zTPhysicalVobCollisionMethod)Shape, OtherShape );
+    if( !mesh )
+      return;
+
+    btRigidBody* rigidBody = mesh->GetRigidBody();
+    rigidBody->setWorldTransform( Mat4ToBtTransform( trafoObjToWorld ) );
+    rigidBody->setFriction( Friction );
+    rigidBody->setRestitution( Restitution );
+    rigidBody->setLinearVelocity( LinearVelocity.ToBtVector3() );
+    rigidBody->setAngularVelocity( AngularVelocity.ToBtVector3() );
+
+    Provider = new zPhysicalVobProvider( mesh, this );
+    mesh->Release();
+
+    if( homeWorld && homeWorld == ogame->GetGameWorld() )
+      PhysicsEnable();
+  }
+
+
+
+  // TODO
+  static void DrawPhysicalMeshGrid( int collMethod, btCollisionShape* collisionShape, const btTransform& trafo ) {
+    if( collMethod == zCOLL_METHOD_VOBSHAPE || collMethod == zCOLL_METHOD_OTHERSHAPE ) {
+      btConvexHullShape* hull = (btConvexHullShape*)collisionShape;
+
+      int numEdges = hull->getNumPoints();
+      const btVector3* points = hull->getPoints();
+      for( uint i = 0; i < numEdges - 2; i += 3 ) {
+        zlineCache->Line3D( trafo * points[i + 0], trafo * points[i + 1], GFX_AQUA, 1 );
+        zlineCache->Line3D( trafo * points[i + 1], trafo * points[i + 2], GFX_AQUA, 1 );
+        zlineCache->Line3D( trafo * points[i + 2], trafo * points[i + 0], GFX_AQUA, 1 );
+      }
+    }
+
+    if( collMethod == zCOLL_METHOD_SPHERE ) {
+      btSphereShape* sphere = (btSphereShape*)collisionShape;
+    }
+
+    if( collMethod == zCOLL_METHOD_CYLINDER ) {
+      btCylinderShape* cylinder = (btCylinderShape*)collisionShape;
+      btVector3 extents = cylinder->getHalfExtentsWithMargin();
+      float radius =  cylinder->getRadius();
+
+      float step = PI * 0.1f;
+      for( float angle = step; angle < PI2; angle += step ) {
+        btVector3 pointA = btVector3( cos( angle - step ) * extents[VX], extents[VY], sin( angle - step ) * extents[VZ] );
+        btVector3 pointB = btVector3( cos( angle        ) * extents[VX], extents[VY], sin( angle        ) * extents[VZ] );
+        zlineCache->Line3D( trafo * pointA, trafo * pointB, GFX_AQUA, 0 );
+      }
+
+      for( float angle = step; angle < PI2; angle += step ) {
+        btVector3 pointA = btVector3( cos( angle - step ) * extents[VX], -extents[VY], sin( angle - step ) * extents[VZ] );
+        btVector3 pointB = btVector3( cos( angle        ) * extents[VX], -extents[VY], sin( angle        ) * extents[VZ] );
+        btVector3 pointC = btVector3( pointA[VX], extents[VY], pointA[VZ] );
+        zlineCache->Line3D( trafo * pointA, trafo * pointC, GFX_AQUA, 0 );
+        zlineCache->Line3D( trafo * pointA, trafo * pointC, GFX_AQUA, 0 );
+      }
+    }
+
+    if( collMethod == zCOLL_METHOD_CONE ) {
+      btConeShape* cone = (btConeShape*)collisionShape;
+    }
+
+    if( collMethod == zCOLL_METHOD_CAPSULE ) {
+      btCapsuleShape* cone = (btCapsuleShape*)collisionShape;
+    }
+
+    // zCOLL_METHOD_BOX as Default
+    btBoxShape* box = (btBoxShape*)collisionShape;
+  }
+
+
+
+  inline void RenderVobForce( zCVob* vob, const zMAT4& placeTrafo ) {
+    zMAT4 trafoObjToWorld   = vob->trafoObjToWorld;
+    int visualAlphaEnabled  = vob->visualAlphaEnabled;
+    float visualAlpha       = vob->visualAlpha;
+    vob->trafoObjToWorld    = placeTrafo;
+    vob->visualAlphaEnabled = True;
+    vob->visualAlpha       *= 0.5f;
+
+    zTRenderContext con;
+    con.cam                 = zCCamera::activeCam;
+    con.vob                 = vob;
+    con.world               = vob->homeWorld;
+
+    vob->visual->Render( con );
+    vob->trafoObjToWorld    = trafoObjToWorld;
+    vob->visualAlphaEnabled = visualAlphaEnabled;
+    vob->visualAlpha        = visualAlpha;
+  }
+
+
+
+  void zCVobPhysical::ProviderCallback() {
+    if( Physics == zPHY_METHOD_ENABLED_INGAMEONLY )
+      if( LinearVelocity.Length() > 0.0f )
+        if( GetDistanceToVob( *ogame->GetCameraVob() ) < 5000.0f )
+          zlineCache->Line3D( GetPositionWorld(), GetPositionWorld() + LinearVelocity, GFX_YELLOW, True );
+
+    if( Physics == zPHY_METHOD_ENABLED_PREVIEW ) {
+
+      zTBBox3D bbox;
+      btVector3 btMin;
+      btVector3 btMax;
+
+      Provider->GetRigidBody()->getAabb( btMin, btMax );
+
+      bbox.mins = btMin;
+      bbox.maxs = btMax;
+      bbox.Draw( GFX_AQUA );
+
+      zMAT4 trafo = BtTransformToMat4( Provider->GetRigidBody()->getWorldTransform() );
+      RenderVobForce( this, trafo );
+      DrawPhysicalMeshGrid( Shape, Provider->GetPhysicalMesh()->GetCollisionShape(), Mat4ToBtTransform( trafo ) );
+    }
   }
 
 
@@ -160,8 +343,13 @@ namespace GOTHIC_ENGINE {
       return;
 
     zCVisual* instance = zCVisual::LoadVisual( visualNameUC );
-    if( !instance || instance == visual )
+    if( !instance )
       return;
+
+    if( instance == visual ) {
+      instance->Release();
+      return;
+    }
 
     SetVisual( instance, method, otherShape );
     instance->Release();
@@ -173,13 +361,13 @@ namespace GOTHIC_ENGINE {
     if( visual )
       visual->HostVobAddedToWorld( this, homeWorld );
 
-    PhysicEnable();
+    PhysicsEnable();
   }
 
 
 
   void zCVobPhysical::ThisVobRemovedFromWorld( zCWorld* world ) {
-    PhysicDisable();
+    PhysicsDisable();
     if( visual )
       visual->HostVobRemovedFromWorld( this, homeWorld );
   }
@@ -187,29 +375,26 @@ namespace GOTHIC_ENGINE {
 
 
   void zCVobPhysical::Archive( zCArchiver& ar ) {
-    static string enumShape  = "BOX;SPHERE;CYLINDER;CONE;VOB SHAPE;OTHER SHAPE";
-    static string enumPhysic = "DISABLED;ENABLED;IN GAME ONLY";
+    static string enumShape  = "BOX;SPHERE;CYLINDER;CONE;CAPSULE;VOB SHAPE;OTHER SHAPE";
+    static string enumPhysic = "DISABLED;ENABLED;IN GAME ONLY;PREVIEW";
     zCVob::Archive( ar );
 
-    zVEC3 linearVelocity;
-    zVEC3 angularVelocity;
-
-    if( Provider ) {
+    if( Provider && PhysicsEnabled && Physics != zPHY_METHOD_ENABLED_PREVIEW ) {
       auto rigidBody  = Provider->GetRigidBody();
-      linearVelocity  = rigidBody->getInterpolationLinearVelocity();
-      angularVelocity = rigidBody->getInterpolationAngularVelocity();
+      LinearVelocity  = rigidBody->getInterpolationLinearVelocity();
+      AngularVelocity = rigidBody->getInterpolationAngularVelocity();
       Friction        = rigidBody->getFriction();
-      Restitution      = rigidBody->getRestitution();
+      Restitution     = rigidBody->getRestitution();
     }
 
     ar.WriteGroupBegin( "Physics" );
 
-    ar.WriteEnum  ( "Physics", enumPhysic, Physic );
+    ar.WriteEnum  ( "Enabled", enumPhysic, Physics );
     ar.WriteFloat ( "Mass",                Mass );
     ar.WriteFloat ( "Friction",            Friction );
     ar.WriteFloat ( "Restitution",         Restitution );
-    ar.WriteVec3  ( "LinearVelocity",      linearVelocity );
-    ar.WriteVec3  ( "AngularVelocity",     angularVelocity );
+    ar.WriteVec3  ( "LinearVelocity",      LinearVelocity );
+    ar.WriteVec3  ( "AngularVelocity",     AngularVelocity );
     ar.WriteEnum  ( "Shape", enumShape,    Shape );
     ar.WriteString( "OtherShape",          OtherShape );
 
@@ -219,39 +404,25 @@ namespace GOTHIC_ENGINE {
 
 
   void zCVobPhysical::Unarchive( zCArchiver& ar ) {
-    zVEC3 linearVelocity;
-    zVEC3 angularVelocity;
-
     zCVob::Unarchive( ar );
 
-    ar.ReadInt   ( "Physic",          Physic );
+    ar.ReadEnum  ( "Enabled",         Physics );
     ar.ReadFloat ( "Mass",            Mass );
     ar.ReadFloat ( "Friction",        Friction );
     ar.ReadFloat ( "Restitution",     Restitution );
-    ar.ReadVec3  ( "LinearVelocity",  linearVelocity );
-    ar.ReadVec3  ( "AngularVelocity", angularVelocity );
-    ar.ReadInt   ( "Shape",           Shape );
+    ar.ReadVec3  ( "LinearVelocity",  LinearVelocity );
+    ar.ReadVec3  ( "AngularVelocity", AngularVelocity );
+    ar.ReadEnum  ( "Shape",           Shape );
     ar.ReadString( "OtherShape",      OtherShape );
 
-    zCVisual* visualCopy = visual;
-    visualCopy->AddRef();
-    SetVisual( Null );
-    SetVisual( visualCopy, (zTPhysicalVobCollisionMethod)Shape, OtherShape );
-
-    if( Provider ) {
-      auto rigidBody = Provider->GetRigidBody();
-      rigidBody->setInterpolationLinearVelocity( linearVelocity.ToBtVector3() );
-      rigidBody->setInterpolationAngularVelocity( angularVelocity.ToBtVector3() );
-      rigidBody->setFriction( Friction );
-      rigidBody->setRestitution( Restitution );
-    }
+    ApplyPhysics();
   }
 
 
 
   zCVobPhysical::~zCVobPhysical() {
     if( Provider ) {
-      PhysicDisable();
+      PhysicsDisable();
       Provider->Release();
     }
   }

@@ -235,6 +235,9 @@
     <Filter Include="Plugin\Workspace\Physics\PhysicalVobs">
       <UniqueIdentifier>{14dbade7-3fd3-4ff1-aaa2-0fb94bf0ef53}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Plugin\Workspace\Physics\SoftShapes">
+      <UniqueIdentifier>{c06c5c36-0b14-44ba-9edc-7ea4b9c78369}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Interface.cpp">
@@ -2843,6 +2846,15 @@
     </ClInclude>
     <ClInclude Include="Physics\PhysicalVobs\PhysicalVobs.cpp">
       <Filter>Plugin\Workspace\Physics\PhysicalVobs</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\CompoundShapes\CompoundShapes_MeshBuilder.cpp">
+      <Filter>Plugin\Workspace\Physics\CompoundShapes</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\SoftShapes\SoftShapes.cpp">
+      <Filter>Plugin\Workspace\Physics\SoftShapes</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\SoftShapes\SoftShapes.h">
+      <Filter>Plugin\Workspace\Physics\SoftShapes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

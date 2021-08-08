@@ -505,6 +505,10 @@
     <ClCompile Include="DllMain.cpp" />
     <ClInclude Include="BulletInterface.h" />
     <ClInclude Include="Physics\CompoundShapes\CompoundShapes.h" />
+    <ClInclude Include="Physics\CompoundShapes\CompoundShapes_MeshBuilder.cpp">
+      <SubType>
+      </SubType>
+    </ClInclude>
     <ClInclude Include="Physics\PhysicalVobs\PhysicalVobs.h">
       <SubType>
       </SubType>
@@ -516,6 +520,14 @@
     <ClInclude Include="Physics\PhysicsBase.h" />
     <ClInclude Include="Physics\PhysicsWorld\PhysicsWorld.h" />
     <ClInclude Include="Physics\SimpleShapes\SimpleShapes.h" />
+    <ClInclude Include="Physics\SoftShapes\SoftShapes.cpp">
+      <SubType>
+      </SubType>
+    </ClInclude>
+    <ClInclude Include="Physics\SoftShapes\SoftShapes.h">
+      <SubType>
+      </SubType>
+    </ClInclude>
     <ClInclude Include="Physics\VobProvider\VobProvider.h" />
     <ClInclude Include="Plugin.cpp" />
     <ClCompile Include="Interface.cpp" />
